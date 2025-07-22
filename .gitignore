@@ -1,0 +1,12 @@
+# Ignore Python compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore log files
+log/
+
+# Ignore any other temporary files
+*.log
+
