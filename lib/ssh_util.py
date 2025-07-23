@@ -60,3 +60,17 @@ def connect_bmc(ip, logger):
 
     logger.info(f"Connected to {ip}")
     return ssh
+
+def run_command(ssh, command, logger):
+    """Run a command on the BMC and handle output/error."""
+    stdin, stdout, stderr = ssh.exec_command(command)
+    output = stdout.read().decode()
+    error = stderr.read().decode()
+
+    if error:
+        logger.error(f"Error executing command: {command}")
+        logger.error(error)
+        return False  # Indicating a failure for this cycle
+    else:
+        logger.info(f"Command output: {output}")
+    return True  # Success if no error is detected

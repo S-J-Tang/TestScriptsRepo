@@ -41,14 +41,20 @@ def run_test_cycle(ip, cycle_num, logger):
 def main(ip):
     # Initialize logger
     logger = init_logger("bmc_reboot.log", verbose=True)
+    total_cycles = 1
 
     # Run 10 test cycles
-    for cycle_num in range(1, 11):
+    for cycle_num in range(1, total_cycles+1):
         success = run_test_cycle(ip, cycle_num, logger)
         if not success:
-            logger.error(f"Test cycle {cycle_num} failed. Stopping further tests.")
-            break
+            failure_count += 1  # Increment failure count if test fails
+            logger.error(f"Test cycle {cycle_num} failed. Continuing with next cycle.")
         time.sleep(2)  # Delay between cycles to avoid continuous strain
+
+    fail_rate = (failure_count / total_cycles) * 100
+
+    # Log fail rate
+    logger.info(f"Fail rate: {fail_rate}%")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -46,7 +46,7 @@ def wait_for_connection(target_info, status, await_time, logger=None):
 
 def wait_bmc_reboot_connection(target_info, timeout=600, interval=10):
     """
-    等待 BMC 重開機後重新連上
+    Wait for BMC to go offline and then come back online.
     """
 
     def is_pingable(ip):
@@ -80,41 +80,10 @@ def wait_bmc_reboot_connection(target_info, timeout=600, interval=10):
     print("[ERROR] Timeout: BMC did not come back online.")
     return False
 
-
-
-# def no_jobs_running(timeout, cmd_timeout):
-#     """
-#     Return true if the command "systemctl list-jobs"
-#     outputs "No jobs running."
-#     """
-#     check_interval = 5
-#     cmd = f"systemctl list-jobs"
-#     no_jobs = "No jobs running."
-#     start_time = datetime.now()
-#     while True:
-#         time_delta = datetime.now() - start_time
-#         logger.debug(f"Waiting for systemd jobs done, elapsed time:{time_delta}")
-#         if time_delta.total_seconds() >= int(timeout):
-#             logger.error("Waiting for systemd jobs done has timed out")
-#             return False
-#         try:
-#             out, err, rc = bsu.bmc_execute_command(cmd_buf=cmd, time_out=cmd_timeout, ignore_err=1,  quiet=1)
-#             if out == no_jobs:
-#                 logger.info("No systemd jobs is running now")
-#                 return True
-#         except Exception:
-#             pass
-
-#         time.sleep(check_interval)
-
-# def wait_bmc_reboot_no_jobs_running(logger):
-#     """
-#     Reboot BMC and wait for systemd jobs done
-#     """
-#     if not wait_bmc_reboot_connection(logger):
-#         return False
-
-#     no_jobs_await_time = 180
-#     if no_jobs_running(logger, no_jobs_await_time, DEFAULT_TIMEOUT_S):
-#         return True
-#     return False
+def check_bmc_reboot(ip, logger):
+    """Check if the BMC has rebooted successfully."""
+    logger.info("Waiting for BMC to reboot and reconnect...")
+    if not wait_bmc_reboot_connection({"ip": ip, "port": 22, "username": "root", "password": "0penBmc"}, timeout=600):
+        logger.error(f"BMC failed to reconnect after reboot.")
+        return False
+    return True
