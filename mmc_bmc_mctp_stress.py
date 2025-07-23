@@ -6,23 +6,6 @@ import lib.ssh_util as ssh_util
 import lib.bmc_boot_utils as bbu
 from lib.init_logger import init_logger
 
-def connect_bmc(ip, logger):
-    target = {
-        "ip": ip,
-        "port": 22,
-        "username": "root",
-        "password": "0penBmc"
-    }
-
-    # Establish SSH connection
-    connected, ssh = ssh_util.get_ssh_session(target)
-    if not connected:
-        logger.error(f"Failed to connect to BMC at {ip}")
-        sys.exit(1)
-
-    logger.info(f"Connected to {ip}")
-    return ssh
-
 def check_bmc_reboot(ip, logger):
     """Check if the BMC has rebooted successfully."""
     logger.info("Waiting for BMC to reboot and reconnect...")
@@ -48,7 +31,7 @@ def run_test_cycle(ip, cycle_num, logger):
     logger.info(f"Running test cycle {cycle_num}...")
 
     # Connect to BMC
-    ssh = connect_bmc(ip, logger)
+    ssh = ssh_util.connect_bmc(ip, logger)
 
     # Step 1: MCTP link setup
     logger.info("Setting up MCTP link...")

@@ -42,3 +42,21 @@ def push_file(self, target:dict, file_path:str):
     except Exception as e:
         self.logger.error(f"Fail to push {file_name} to {ip}, {e}")
         return False
+
+def connect_bmc(ip, logger):
+    """Connect to the BMC and return an SSH session."""
+    target = {
+        "ip": ip,
+        "port": 22,
+        "username": "root",
+        "password": "0penBmc"
+    }
+
+    # Use the existing get_ssh_session function
+    connected, ssh = get_ssh_session(target)
+    if not connected:
+        logger.error(f"Failed to connect to BMC at {ip}")
+        sys.exit(1)
+
+    logger.info(f"Connected to {ip}")
+    return ssh
