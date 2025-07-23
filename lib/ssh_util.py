@@ -10,6 +10,7 @@ import time
 import paramiko
 import socket
 import os
+import logging
 from datetime import date
 
 def get_ssh_session(target:dict):
@@ -29,18 +30,32 @@ def get_ssh_session(target:dict):
         pass
     return connected, ssh
 
-def push_file(self, target:dict, file_path:str):
+def push_file(target: dict, file_path: str, remote_dir: str = "/tmp/pldm"):
+    """
+    Uploads a file to the specified remote directory on the target BMC.
+    
+    :param target: A dictionary containing BMC connection details.
+    :param file_path: The local path of the file to be uploaded.
+    :param remote_dir: The remote directory on the BMC where the file should be uploaded.
+    """
     try:
         ip = target["ip"]
         file_name = file_path.split("/")[-1]
         t = paramiko.Transport((ip, 22))
         t.connect(username=target["username"], password=target["password"])
         sftp = paramiko.SFTPClient.from_transport(t)
-        sftp.put(file_path, "/var/wcs/home/"+file_name)
+
+        # Use remote_dir for specifying the path
+        remote_path = f"{remote_dir}/{file_name}"
+        
+        # Upload the file
+        sftp.put(file_path, remote_path)
         t.close()
+
+        logging.info(f"Successfully uploaded {file_name} to {remote_path}")
         return True
     except Exception as e:
-        self.logger.error(f"Fail to push {file_name} to {ip}, {e}")
+        logging.error(f"Failed to upload {file_path} to {ip}, {e}")
         return False
 
 def connect_bmc(ip, logger):
