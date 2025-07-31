@@ -4,6 +4,7 @@ import time
 import lib.ssh_util as ssh_util
 import lib.bmc_boot_utils as bbu
 from lib.init_logger import init_logger
+import os
 
 def run_test_cycle(ip, cycle_num, logger):
     logger.info(f"Running test cycle {cycle_num}...")
@@ -45,7 +46,7 @@ def run_test_cycle(ip, cycle_num, logger):
 
     # Step 4: Learning MCTP endpoint
     logger.info("Learning MCTP endpoint...")
-    learn_endpoint_command = "busctl call au.com.codeconstruct.MCTP1 /au/com/codeconstruct/mctp1/interfaces/mctpi3c0 au.com.codeconstruct.MCTP.BusOwner1 LearnEndpoint ay 6 0x06 0x32 0x12 0x34 0x55 0x1E"
+    learn_endpoint_command = "busctl call au.com.codeconstruct.MCTP1 /au/com/codeconstruct/mctp1/interfaces/mctpi3c0 au.com.codeconstruct.MCTP.BusOwner1 LearnEndpoint ay 6 0x06 0x32 0x12 0x34 0x55 0x10"
     if not ssh_util.run_command(ssh, learn_endpoint_command, logger):
         logger.error(f"Failed to learn MCTP endpoint during cycle {cycle_num}.")
         return False
@@ -65,7 +66,11 @@ def run_test_cycle(ip, cycle_num, logger):
 
     # Step 6: Upload image file to BMC
     logger.info("Uploading image file to BMC...")
-    img_path = "/home/billy/Desktop/meta/sitv3/sit/img/SB_SI_v31_0731_v2.pldm"  # Example path, update with your actual file
+    
+    # Get the current working directory and build the relative path to the image file
+    current_directory = os.getcwd()
+    img_path = os.path.join(current_directory, "img", "SB_SI_v31_0731_v2.pldm")
+    
     target = {
         "ip": ip,
         "port": 22,
