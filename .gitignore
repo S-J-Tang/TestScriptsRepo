@@ -6,8 +6,10 @@ __pycache__/
 
 # Ignore log files
 log/
-img/
+
+# Ignore .bin and .pldm files in the img directory, but keep other files
+img/*.bin
+img/*.pldm
 
 # Ignore any other temporary files
 *.log
-
