@@ -5,6 +5,7 @@ import time
 import lib.ssh_util as ssh_util
 import lib.bmc_boot_utils as bbu
 from lib.init_logger import init_logger
+import lib.bmc_util as bu
 
 def run_test_cycle(ip, cycle_num, logger):
     logger.info(f"Running test cycle {cycle_num}...")
@@ -17,38 +18,11 @@ def run_test_cycle(ip, cycle_num, logger):
     stdin, stdout, stderr = ssh.exec_command("lsusb -vt")
     logger.info(stdout.read().decode())
 
-    """
-    if you want to write ten times per lopp as below command:
-
-    LOG=/tmp/uart.log; PORT=/dev/ttyUSB1;
-    stty -F "$PORT" 57600 cs8 -cstopb -parenb -icanon -echo;
-    > "$LOG";
-    cat "$PORT" >> "$LOG" & CATPID=$!;
-    sleep 2;
-    for i in {0..10};
-    do printf "platform info\r" > "$PORT"; sleep 0.1; done; sleep 2;
-    kill "$CATPID";
-    wait "$CATPID" 2>/dev/null;
-    cat "$LOG"
-
-    """
     # Display mmc platform info
     logger.info("Reading mmc platform info...")
-    command = '''
-    LOG=/tmp/uart.log; PORT=/dev/ttyUSB5; 
-    stty -F "$PORT" 57600 cs8 -cstopb -parenb -icanon -echo; 
-    > "$LOG"; 
-    cat "$PORT" >> "$LOG" & CATPID=$!; 
-    sleep 2; 
-    printf "platform info\r" > "$PORT"; 
-    sleep 2; 
-    kill "$CATPID"; 
-    wait "$CATPID" 2>/dev/null; 
-    cat "$LOG"
-    '''
-    stdin, stdout, stderr = ssh.exec_command(command)
-    logger.info(stdout.read().decode())
-
+    mmc = bu.SerialSSHClient(ssh, "ttyUSB5", logger)
+    logger.info(mmc.send_command("platform info"))
+    mmc.close()
     ssh.close()
     return True  # Cycle passed
 
@@ -56,6 +30,7 @@ def main(ip):
     # Initialize logger
     logger = init_logger("bmc_reboot.log", verbose=True)
     total_cycles = 1
+    failure_count = 0
 
     # Run 1 test cycles
     for cycle_num in range(1, total_cycles+1):
@@ -72,6 +47,6 @@ def main(ip):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-ip", help="Target BMC IP address", default="10.10.14.229")  # Default IP set here
+    parser.add_argument("-ip", help="Target BMC IP address", default="10.10.15.221")  # Default IP set here
     args = parser.parse_args()
     main(args.ip)
