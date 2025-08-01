@@ -42,7 +42,7 @@ def push_file(target: dict, file_path: str, remote_dir: str = "/tmp/pldm_images"
     for attempt in range(1, retries + 1):
         try:
             t = paramiko.Transport((ip, 22))
-            t.connect(username=target["root"], password=target["0penBmc"])
+            t.connect(username=target["username"], password=target["password"])
             sftp = paramiko.SFTPClient.from_transport(t)
 
             # Ensure remote directory exists
