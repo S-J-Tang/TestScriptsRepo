@@ -30,33 +30,40 @@ def get_ssh_session(target:dict):
         pass
     return connected, ssh
 
-def push_file(target: dict, file_path: str, remote_dir: str = "/tmp/pldm"):
+def push_file(target: dict, file_path: str, remote_dir: str = "/tmp/pldm_images", retries=3, delay=2):
     """
     Uploads a file to the specified remote directory on the target BMC.
-    
-    :param target: A dictionary containing BMC connection details.
-    :param file_path: The local path of the file to be uploaded.
-    :param remote_dir: The remote directory on the BMC where the file should be uploaded.
+    Ensures remote directory exists and retries on failure.
     """
-    try:
-        ip = target["ip"]
-        file_name = file_path.split("/")[-1]
-        t = paramiko.Transport((ip, 22))
-        t.connect(username=target["username"], password=target["password"])
-        sftp = paramiko.SFTPClient.from_transport(t)
+    ip = target["ip"]
+    file_name = os.path.basename(file_path)
+    remote_path = f"{remote_dir}/{file_name}"
 
-        # Use remote_dir for specifying the path
-        remote_path = f"{remote_dir}/{file_name}"
-        
-        # Upload the file
-        sftp.put(file_path, remote_path)
-        t.close()
+    for attempt in range(1, retries + 1):
+        try:
+            t = paramiko.Transport((ip, 22))
+            t.connect(username=target["root"], password=target["0penBmc"])
+            sftp = paramiko.SFTPClient.from_transport(t)
 
-        logging.info(f"Successfully uploaded {file_name} to {remote_path}")
-        return True
-    except Exception as e:
-        logging.error(f"Failed to upload {file_path} to {ip}, {e}")
-        return False
+            # Ensure remote directory exists
+            try:
+                sftp.stat(remote_dir)
+            except FileNotFoundError:
+                sftp.mkdir(remote_dir)
+
+            sftp.put(file_path, remote_path)
+            sftp.close()
+            t.close()
+
+            logging.info(f"[Attempt {attempt}] Uploaded {file_path} to {remote_path}")
+            return True
+
+        except Exception as e:
+            logging.warning(f"[Attempt {attempt}] Failed to upload: {e}")
+            time.sleep(delay)
+
+    logging.error(f"Upload failed after {retries} attempts: {file_path}")
+    return False
 
 def connect_bmc(ip, logger):
     """Connect to the BMC and return an SSH session."""
@@ -89,3 +96,21 @@ def run_command(ssh, command, logger):
     else:
         logger.info(f"Command output: {output}")
     return True  # Success if no error is detected
+
+def run_command_and_get_output(ssh, command, logger):
+    """
+    Run a command over SSH and return the output as a string.
+    """
+    try:
+        logger.info(f"Running command: {command}")
+        stdin, stdout, stderr = ssh.exec_command(command)
+        output = stdout.read().decode().strip()
+        err_output = stderr.read().decode().strip()
+
+        if err_output:
+            logger.warning(f"Command stderr: {err_output}")
+        logger.info(f"Command output: {output}")
+        return output
+    except Exception as e:
+        logger.error(f"Exception while running command: {command}, error: {e}")
+        return None
