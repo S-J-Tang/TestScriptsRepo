@@ -5,9 +5,12 @@ from paramiko import SSHClient
 import re
 
 class SerialSSHClient:
-    def __init__(self, ssh: SSHClient, port: str, logger: Logger, log_file= "/tmp/uart.log", rate = 57600):
+    def __init__(self, ssh: SSHClient, port: str, logger: Logger, log_file= "default", rate = 57600):
         self.ssh = ssh
         self.port = "/dev/" + port
+        self.log_file = "/tmp/" + port + ".log"
+        if log_file != "default":
+            self.log_file = "/tmp/" + log_file
         self.log_file = log_file
         self.logger = logger
         self.pid = None
