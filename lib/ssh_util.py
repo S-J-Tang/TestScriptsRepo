@@ -12,6 +12,7 @@ import socket
 import os
 import logging
 from datetime import date
+import sys
 
 def get_ssh_session(target:dict):
     connected = False

@@ -4,21 +4,7 @@ import lib.bmc_boot_utils as bbu
 import argparse
 import sys
 
-def main(ip):
-    target = {
-        "ip": ip,
-        "port": 22,
-        "username": "root",
-        "password": "0penBmc"
-    }
-
-    connected, ssh = lib.ssh_util.get_ssh_session(target)
-    if not connected:
-        print(f"Failed to connect to BMC")
-        sys.exit(1)
-
-    print(f"Connected")
-
+def ac(ssh, target):
     _, stdout, _ = ssh.exec_command("mfg-tool power-control -p 0 -s standby -a cycle")
     output = stdout.read().decode()
     print(output)
@@ -28,6 +14,20 @@ def main(ip):
         print("BMC reboot failed.")
         sys.exit(1)
     print("BMC reboot success.")
+
+def main(ip):
+    target = {
+        "ip": ip,
+        "port": 22,
+        "username": "root",
+        "password": "0penBmc"
+    }
+    connected, ssh = lib.ssh_util.get_ssh_session(target)
+    if not connected:
+        print(f"Failed to connect to BMC")
+        sys.exit(1)
+    print(f"Connected")
+    ac(ssh, target)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -33,14 +33,14 @@ class SerialSSHClient:
         self.ssh.exec_command(f'printf "{command}\\r" > "{self.port}"')
         time.sleep(sleep)
         stdin, stdout, stderr = self.ssh.exec_command(f"cat {self.log_file}")
-        return self.__remove_ansi_escape(stdout.read().decode())
+        return self.__remove_ansi_escape(stdout.read().decode("utf-8", errors="ignore"))
     
     def log_inf(self):
         self.logger.info((self.return_log()))
 
     def return_log(self):
         stdin, stdout, stderr = self.ssh.exec_command(f"cat {self.log_file}")
-        return self.__remove_ansi_escape(stdout.read().decode())
+        return self.__remove_ansi_escape(stdout.read().decode("utf-8", errors="ignore"))
     
     def clear_log(self):
         self.ssh.exec_command(f"> {self.log_file}")
